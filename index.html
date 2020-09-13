@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>IUT de Lens -- Gestion de l'EDT</title>
+        <link rel="icon" href="/images/iconLogoIUT.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body id="body">
+        <header id="headerNav"> <!-- The navbar -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <a class="navbar-brand" href="http://www.iut-lens.univ-artois.fr" target="_blank">
+                    <img src="/images/logoIUT.png" width="60" height="60" class="d-inline-block align-top">
+                </a>
+                <a class="navbar-brand header-link menulink" onclick="redirectAccueil()">Gestion de l'emploi du temps</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+                            <a class="nav-link menulink" onclick="printHistory()">Historique</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menulink" onclick="printDemandesDeplacements()">Déplacements</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Emploi du temps</a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item menulink" onclick="setDispo('Général')">Général</a>
+                                <a class="dropdown-item menulink" onclick="setDispo('Professeurs')">Professeurs</a>
+                                <a class="dropdown-item menulink" onclick="setDispo('Matières')">Matières</a>
+                                <a class="dropdown-item menulink" onclick="setDispo('Salles')">Salles</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menulink" onclick="downloadJSON()">Sauvegarder</a>
+                        </li>
+                    </ul>
+                    <div class="form-inline mt-2 mt-md-0">
+                        <button id="btn-connexion" class="btn btn-outline-success my-2 my-sm-0" type="button" onclick="clickOnBtnConnexion()">Se connecter</button>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <div id="main"> <!-- The main page -->
+            <div id="containerLeft" class="container col-sm-4 col-md-7" style="float: left; top: 0; width: 23.2rem;"> <!-- The left container  -->
+                <div class="card shadow-sm"> <!-- The calendar -->
+                    <h3 class="card-header monthYear"><span id="monthAndYear" onclick="selectAMonth()"></span></h3>
+                    <table class="table table-bordered table-responsive" id="calendar">
+                        <thead>
+                            <tr>
+                                <th class="calendarLeftColumn">N°</th>
+                                <th class="calendarRowSup">L</th>
+                                <th class="calendarRowSup">M</th>
+                                <th class="calendarRowSup">M</th>
+                                <th class="calendarRowSup">J</th>
+                                <th class="calendarRowSup">V</th>
+                                <th class="calendarRowSup">S</th>
+                                <th class="calendarRowSup">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-body">
+                        </tbody>
+                    </table>
+                    <div class="form-inline">
+                        <button class="btn btn-outline-info col-sm-6" id="previous" onclick="previous()">Précédent</button>
+                        <button class="btn btn-outline-info col-sm-6" id="next" onclick="next()">Suivant</button>
+                    </div>
+                    <br/>
+                    <form class="form-inline">
+                        <label class="lead mr-2 ml-2" for="month">Aller à :</label>
+                        <select class="form-control col-sm-4" name="month" id="month" onchange="jump()">
+                            <option value=0>Janvier</option>
+                            <option value=1>Février</option>
+                            <option value=2>Mars</option>
+                            <option value=3>Avril</option>
+                            <option value=4>Mai</option>
+                            <option value=5>Juin</option>
+                            <option value=6>Juillet</option>
+                            <option value=7>Août</option>
+                            <option value=8>Septembre</option>
+                            <option value=9>Octobre</option>
+                            <option value=10>Novembre</option>
+                            <option value=11>Décembre</option>
+                        </select>
+                        <label for="year"></label>
+                        <select class="form-control col-sm-4" name="year" id="year" onchange="jump()">
+                            <option value=2018>2018</option>
+                            <option value=2019>2019</option>
+                            <option value=2020>2020</option>
+                        </select>
+                    </form>
+                </div>
+                <div class="card shadow-sm" id="cardSelection"> <!-- Card selection of the number of weeks -->
+                </div>
+                <div class="card shadow-sm" id="cardInsertion"> <!-- Card insertion of a course -->
+                </div>
+                <div class="card shadow-sm" id="cardDeletModifComment"> <!-- Card deletion/modification of a course or add/remove comments assigned to -->
+                </div>
+            </div>
+            <div id="selectedWeek" class="flex-row flex-nowrap"> <!-- The main menu that contains the rules into a popup -->
+                <div id="cardRules" class="card text-white bg-dark mb-3 w-100" style="margin-right: 1rem;">
+                    <div class="card-body">
+                        <h1 class="card-title text-center">Bienvenue sur l'emploi du temps du département informatique de l'IUT de Lens</h1><br>
+                        <div class="text-center"><button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModalScrollable">Informations</button></div>
+                        <div class="modal fade text-dark" id="exampleModalScrollable" tabindex="-1" role="dialog" aria-labelledby="exampleModalScrollableTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-scrollable" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="exampleModalScrollableTitle">Informations</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Sélection d'un jour en cliquant sur le numéro du jour.<br><br>
+                                        Sélection d'une semaine en cliquant sur le numéro de semaine. Possibilité de sélectionner ensuite une seconde semaine qui sera affichée à la droite de la première.<br><br>
+                                        Sélection d'un mois en cliquant sur le mois. Les semaines y sont affichées les une à côté des autres.<br><br>
+                                        Après avoir sélectionné un type d'affichage une fonction 'Insérer' vous est proposée. Possibilité d'insérer un créneau qui doit respecter l'emploi du temps actuel.<br><br>
+                                        Clic gauche sur un créneau pour mieux voir les créneaux du même type.<br><br>
+                                        Clic droit sur un créneau pour voir l'horaire de ce dernier ainsi qu'apporter des modifications ou le supprimer. Vous avez la possibilité de voir les commentaires se rapportant à ce créneau ainsi qu'en rajouter ou supprimer.<br><br>
+                                        Vous avez la possibilité de modifier et d'insérer un même créneau sur plusieurs semaines.<br><br>
+                                        Historique de modification(s)/suppression(s)/insertion(s) dans le menu de navigation.<br><br>
+                                        Possibilité d'afficher l'emploi du temps général ou d'un(e) professeur/salle/matière en particulier en allant dans 'Emploi du temps' dans le menu de navigation ou en cliquant directement sur ce dernier dans un créneau apparaissant.<br><br>
+                                        Possibilité de déplacer un créneau avec la fonction 'Drag And Drop'.<br><br>
+                                        Possibilité d'intervertir deux créneaux avec cette même fonction 'Drag And Drop'. Une demande de déplacement apparaît donc dans le menu 'Déplacements' accessible par le menu de navigation. Il faut que la demande soit acceptée par les deux professeurs concernés pour que cette dernière soit appliquée.<br><br>
+                                        Possibilité de sauvegarder le nouvel emploi du temps localement.<br><br>
+                                        Possibilité de se connecter avec une adresse mail et un mot de passe. Ceci est nécessaire afin d'apporter quelconque information.<br><br>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="formConnexion card shadow" style="display: none;"> <!-- The connexion menu -->
+            <div class="card-body">
+                <form>
+                    <h2 class="font-weight-bold">Connexion</h2>
+                    <div class="row">
+                        <div class="col">
+                            <label for="exampleInputEmail1">Mail</label>
+                            <input type="email" class="form-control" id="inputUser" aria-describedby="emailHelp">
+                        </div>
+                        <div class="col">
+                            <label for="exampleInputPassword1">Mot de passe</label>
+                            <input type="password" class="form-control" id="inputMdp">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-popup" onclick="checkConnexionCoord()">Valider</button>
+                    <button type="button" class="btn btn-danger btn-popup" onclick="removeBtnConnexion()">Annuler</button>
+                </form>
+            </div>
+        </div>
+        <div class="edtTargetPopup card shadow" style="display: none;"> <!-- The popup for selection of a specific schedule -->
+        </div>
+        <div class="commentSchedule card shadow" style="display: none;"> <!-- The popup for seeing/adding/deleting comments -->
+        </div>
+        <div class="popup card shadow" style="display: none;"> <!-- The basic popup for insertion and modification -->
+            <div class="card-body">
+                <form>
+                    <h2 class="font-weight-bold" id="nameOfModif"></h2>
+                    <div class="row">
+                        <div class="col">
+                            <label>Date</label>
+                            <input type="date" id="datePopup" class="form-control" placeholder="Date" value="" required>
+                        </div>
+                        <div class="col">
+                            <label>Heure</label>
+                            <input type="time" class="form-control" placeholder="Heure" min="08:15" max="17:30" value="08:15" required>
+                        </div>
+                        <div class="col">
+                            <label>Durée</label>
+                            <input type="number" class="form-control" placeholder="Durée" min="15" max="195" value="90" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label>Type</label>
+                            <select class="custom-select mr-sm-2" id="inlineFormType">
+                                <option value="DS">DS</option>
+                                <option value="CM">CM</option>
+                                <option value="TD">TD</option>
+                                <option value="TP">TP</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label>Matière</label>
+                            <select class="custom-select mr-sm-2" id="inlineFormMatiere">
+                                <option value="Projet Tuteuré">Projet Tuteuré</option>
+                                <option value="Langue Vivante">Langue Vivante</option>
+                                <option value="Communication">Communication</option>
+                                <option value="Droit">Droit</option>
+                                <option value="Algorithmique et Programmation">Algorithmique et Programmation</option>
+                                <option value="Réseaux">Réseaux</option>
+                                <option value="Qualité Logiciel">Qualité Logiciel</option>
+                                <option value="Framework Serveur">Framework Serveur</option>
+                                <option value="Projet Tutoré 1">Projet Tutoré 1</option>
+                                <option value="Economie et Gestion">Economie et Gestion</option>
+                                <option value="Introduction aux systèmes informatiques">Introduction aux systèmes informatiques</option>
+                                <option value="Structures de données et algorithmes fondamentaux">Structures de données et algorithmes fondamentaux</option>
+                                <option value="Introduction aux bases de données">Introduction aux bases de données</option>
+                                <option value="Conception de documents et d’interfaces numériques">Conception de documents et d’interfaces numériques</option>
+                                <option value="Projet tutoré – Découverte">Projet tutoré – Découverte</option>
+                                <option value="Mathématiques discrètes">Mathématiques discrètes</option>
+                                <option value="Algèbre linéaire">Algèbre linéaire</option>
+                                <option value="Fonctionnement des organisations">Fonctionnement des organisations</option>
+                                <option value="Expression-Communication – Fondamentaux de la communication">Expression-Communication – Fondamentaux de la communication</option>
+                                <option value="Anglais et Informatique">Anglais et Informatique</option>
+                                <option value="PPP - Connaître le monde professionnel">PPP - Connaître le monde professionnel</option>
+                                <option value="Principes des systèmes d'exploitation">Principes des systèmes d'exploitation</option>
+                                <option value="Services réseaux">Services réseaux</option>
+                                <option value="Algorithmique avancée">Algorithmique avancée</option>
+                                <option value="Programmation Web côté serveur">Programmation Web côté serveur</option>
+                                <option value="Conception et programmation objet avancées">Conception et programmation objet avancées</option>
+                                <option value="Probabilités et statistiques">Probabilités et statistiques</option>
+                                <option value="Modélisations mathématiques">Modélisations mathématiques</option>
+                                <option value="Droit des technologies de l’information et de la communication (TIC)">Droit des technologies de l’information et de la communication (TIC)</option>
+                                <option value="Gestion des systèmes d'information">Gestion des systèmes d'information</option>
+                                <option value="Expression-Communication – Communication professionnelle">Expression-Communication – Communication professionnelle</option>
+                                <option value="Collaborer en anglais ">Collaborer en anglais </option>
+                                <option value="Méthodologie de la production d’applications">Méthodologie de la production d’applications</option>
+                                <option value="PPP – Préciser son projet">PPP – Préciser son projet</option>
+                                <option value="34">Programmation Web – client riche</option>
+                                <option value="Conception de documents et d’interfaces numériques (COM)">Conception de documents et d’interfaces numériques (COM)</option>
+                                <option value="Rattrapage">Rattrapage</option>
+                                <option value="Evaluation des enseignements">Evaluation des enseignements</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label>Groupe</label>
+                            <select class="custom-select mr-sm-2" id="inlineFormGroupe">
+                                <option value="INFO 1">INFO 1</option>
+                                <option value="INFO 2">INFO 2</option>
+                                <option value="LP DIOC">LP DIOC</option>
+                                <option value="groupe 1-A">groupe 1-A</option>
+                                <option value="groupe 1-B">groupe 1-B</option>
+                                <option value="groupe 1-C">groupe 1-C</option>
+                                <option value="groupe 2-A">groupe 2-A</option>
+                                <option value="groupe 2-B">groupe 2-B</option>
+                                <option value="groupe 2-C">groupe 2-C</option>
+                                <option value="groupe 1-A-1">groupe 1-A-1</option>
+                                <option value="groupe 1-B-1">groupe 1-B-1</option>
+                                <option value="groupe 1-C-1">groupe 1-C-1</option>
+                                <option value="groupe 1-A-2">groupe 1-A-2</option>
+                                <option value="groupe 1-B-2">groupe 1-B-2</option>
+                                <option value="groupe 1-C-2">groupe 1-C-2</option>
+                                <option value="groupe 2-A-1">groupe 2-A-1</option>
+                                <option value="groupe 2-A-2">groupe 2-A-2</option>
+                                <option value="groupe 2-B-1">groupe 2-B-1</option>
+                                <option value="groupe 2-B-2">groupe 2-B-2</option>
+                                <option value="groupe 2-C-1">groupe 2-C-1</option>
+                                <option value="groupe 2-C-2">groupe 2-C-2</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label>Professeur</label>
+                            <select class="custom-select mr-sm-2" id="inlineFormProfesseur">
+                                <option value="A. Chafik">A. Chafik</option>
+                                <option value="A. Chmeiss">A. Chmeiss</option>
+                                <option value="A. Goudyme">A. Goudyme</option>
+                                <option value="C. Morin">C. Morin</option>
+                                <option value="C. Piette">C. Piette</option>
+                                <option value="C. Sailliot">C. Sailliot</option>
+                                <option value="D. Le Berre">D. Le Berre</option>
+                                <option value="F. Hemery">F. Hemery</option>
+                                <option value="F. Ramdani">F. Ramdani</option>
+                                <option value="F. Zimmerman">F. Zimmerman</option>
+                                <option value="G. Buchon">G. Buchon</option>
+                                <option value="I. Ouled Dlala">I. Ouled Dlala</option>
+                                <option value="I. Varzinczak">I. Varzinczak</option>
+                                <option value="JB. Gouray">JB. Gouray</option>
+                                <option value="JF. Condotta">JF. Condotta</option>
+                                <option value="L. Membre">L. Membre</option>
+                                <option value="M. El Rezzi">M. El Rezzi</option>
+                                <option value="M. Lucas">M. Lucas</option>
+                                <option value="M. Masquelin">M. Masquelin</option>
+                                <option value="M. Roger">M. Roger</option>
+                                <option value="M. Vaduret">M. Vaduret</option>
+                                <option value="N. Mhadhbi">N. Mhadhbi</option>
+                                <option value="O. Roussel">O. Roussel</option>
+                                <option value="S. Coste">S. Coste</option>
+                                <option value="S. Lambin">S. Lambin</option>
+                                <option value="S. Tabary">S. Tabary</option>
+                                <option value="T. Hsu">T. Hsu</option>
+                                <option value="V. Haccart">V. Haccart</option>
+                                <option value="V. Prensier">V. Prensier</option>
+                                <option value="Y. Fregier">Y. Fregier</option>
+                                <option value="Y. Martello">Y. Martello</option>
+                                <option value="Y. Salhi">Y. Salhi</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label>Salle</label>
+                            <select class="custom-select mr-sm-2" id="inlineFormSalle">
+                                <option value="11 E">11 E</option>
+                                <option value="12 E">12 E</option>
+                                <option value="13 E">13 E</option>
+                                <option value="15 E">15 E</option>
+                                <option value="06 E">06 E</option>
+                                <option value="02 SE">02 SE</option>
+                                <option value="01 SE">01 SE</option>
+                                <option value="05 SE">05 SE</option>
+                                <option value="06 SE">06 SE</option>
+                                <option value="07 SE">07 SE</option>
+                                <option value="08 SE">08 SE</option>
+                                <option value="11 SE">11 SE</option>
+                                <option value="10 SE">10 SE</option>
+                                <option value="09 SE">09 SE</option>
+                                <option value="SP">SP</option>
+                                <option value="Amphi MMI">Amphi MMI</option>
+                                <option value="04 SE">04 SE</option>
+                                <option value="03 SE">03 SE</option>
+                                <option value="Salle des études">Salle des études</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-centered">
+                        <label>Appliquer à combien de semaines ?</label>
+                        <select class="custom-select mr-sm-2" id="inlineFormNbWeek">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-success btn-popup" onclick="modifyEdt()">Valider</button>
+                    <button type="button" class="btn btn-danger btn-popup" onclick="removePopup()">Annuler</button>
+                </form>
+            </div>
+        </div>
+        <script src="scripts.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+    </body>
+</html>
